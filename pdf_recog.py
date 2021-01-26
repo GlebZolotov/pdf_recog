@@ -48,6 +48,7 @@ def fill_lines_in_polar(in_img: np.ndarray, params: Params) -> np.ndarray:
     img_bl = np.copy(in_img)
     while count_of_blur > 0:
         img_bl = cv.medianBlur(img_bl, 3)
+        count_of_blur = count_of_blur - 1
     img_bl = cv.threshold(img_bl, params.thr_border, 256, cv.THRESH_BINARY_INV)[1]
     cv.imwrite("imgs\\thr0.jpg", img_bl)
 
@@ -299,7 +300,7 @@ def detect_lines(table_img: np.ndarray, params: Params) -> list:
 
     i_ = 1
     while i_ < len(gorizontal_lines):
-        if gorizontal_lines[i_][0] - gorizontal_lines[i_ - 1][0] < 20:
+        if gorizontal_lines[i_][0] - gorizontal_lines[i_ - 1][0] < params.min_dist_between_points:
             del gorizontal_lines[i_]
         else:
             i_ = i_ + 1
@@ -326,7 +327,6 @@ def detect_lines(table_img: np.ndarray, params: Params) -> list:
     """
     res = []
     print(vertical_lines)
-    print(gorizontal_lines)
     debug_lines(table_img, gorizontal_lines, vertical_lines)
     for i_ in range(len(gorizontal_lines)):
         res.append([])
@@ -345,7 +345,7 @@ def is_line(cv_img: np.ndarray, i: int, j: int, type_c: int, number_of_points: i
     if type_c == 0:
         for i_ in range(i + 2, i + number_of_points + 2):
             pr_res = False
-            for cor in range(corridor):
+            for cor in range(min(corridor, min(cv_img.shape[1] - j, j))):
                 pr_res = (pr_res or (cv_img[i_, j + cor] == 255) or (cv_img[i_, j - cor] == 255))
             if not pr_res:
                 return False
@@ -400,7 +400,7 @@ def fill_lines(cv_img: np.ndarray, p1: list, p2: list, type_c: int, params: Para
             for i in range(found_p[0] + more_inf[0] - params.min_dist_between_points // 2,
                            found_p[0] + more_inf[0] + params.min_dist_between_points // 2):
                 j = math.floor(delta * (i - p1[0])) + p1[1]
-                if is_line(cv_img, i, j, type_c, params.count_of_points, params.coridor):
+                if i < cv_img.shape[0] and j < cv_img.shape[1] and is_line(cv_img, i, j, type_c, params.count_of_points, params.coridor):
                     res.append([i, j])
                     break
             else:
@@ -465,8 +465,8 @@ def is_changed_frame(thr: np.ndarray, res: np.ndarray, i_: int, j_: int, is_in: 
 def kill_frame(img: np.ndarray) -> np.ndarray:
     res = img.copy()
     sh = res.shape
-    thresh = cv.threshold(res, 200, 255, cv.THRESH_BINARY)[1]
-    max_dist = 5  # sh[0] // 5
+    thresh = cv.threshold(res, 220, 255, cv.THRESH_BINARY)[1]
+    max_dist = 5  #  sh[0] // 10
 
     # kill upper path of frame
     for j_ in range(sh[1]):

@@ -3,17 +3,20 @@ import cv2
 import math
 import copy
 import numpy as np
+import os
 
 
 class ImageScroller(QtWidgets.QWidget):
     def __init__(self, parent=None, pict_path=None):
         self.chosen_points = []
+        self.corners = []
         self.draw_mode = 0
         QtWidgets.QWidget.__init__(self, parent)
         self.setGeometry(QtCore.QRect(0, 0, 630, 900))
         self.setFocusPolicy(Qt.Qt.StrongFocus)
         self.mouse_on = False
         self.render_coeff = 1.0
+        self.pict_path = pict_path
         if pict_path is not None:
             self.pict = cv2.imdecode(np.fromfile(pict_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)  # cv2.imread(pict_path)
             self.path = QtGui.QPainterPath()
@@ -37,11 +40,21 @@ class ImageScroller(QtWidgets.QWidget):
         pen.setWidth(self.width() // 200)
         painter.setPen(pen)
         painter.setRenderHint(QtGui.QPainter.Antialiasing, True)
-        for pos in self.chosen_points:
-            painter.drawLine(round(pos[0][0] * self.width()),
-                             round(pos[0][1] * self.height()),
-                             round(pos[1][0] * self.width()),
-                             round(pos[1][1] * self.height()))
+        if self.draw_mode == 2 and len(self.corners) > 0:
+            painter.drawLine(self.corners[0][0] * self.width(), self.corners[0][1] * self.height(),
+                             self.corners[1][0] * self.width(), self.corners[0][1] * self.height())
+            painter.drawLine(self.corners[1][0] * self.width(), self.corners[0][1] * self.height(),
+                             self.corners[1][0] * self.width(), self.corners[1][1] * self.height())
+            painter.drawLine(self.corners[1][0] * self.width(), self.corners[1][1] * self.height(),
+                             self.corners[0][0] * self.width(), self.corners[1][1] * self.height())
+            painter.drawLine(self.corners[0][0] * self.width(), self.corners[1][1] * self.height(),
+                             self.corners[0][0] * self.width(), self.corners[0][1] * self.height())
+        else:
+            for pos in self.chosen_points:
+                painter.drawLine(round(pos[0][0] * self.width()),
+                                 round(pos[0][1] * self.height()),
+                                 round(pos[1][0] * self.width()),
+                                 round(pos[1][1] * self.height()))
         painter.drawPath(self.path)
         painter = QtGui.QPainter(self)
         painter.drawImage(paint_event.rect(), self._image, self.rect())
@@ -53,14 +66,21 @@ class ImageScroller(QtWidgets.QWidget):
                                        [cursor_event.pos().x() / (self.width()),
                                         cursor_event.pos().y() / (self.height())]]
                                       )
-            self.mouse_on = True
+        elif self.draw_mode == 2:
+            self.corners = [[cursor_event.pos().x() / (self.width()), cursor_event.pos().y() / (self.height())],
+                            [cursor_event.pos().x() / (self.width()), cursor_event.pos().y() / (self.height())]]
+        self.mouse_on = True
         self.update()
 
     def mouseMoveEvent(self, cursor_event):
-        if self.mouse_on and self.draw_mode == 0:
+        if not self.mouse_on:
+            return None
+        if self.draw_mode == 0:
             self.chosen_points[-1][1] = [cursor_event.pos().x() / (self.width()),
                                          cursor_event.pos().y() / (self.height())]
-            self.update()
+        elif self.draw_mode == 2:
+            self.corners[-1] = [cursor_event.pos().x() / (self.width()), cursor_event.pos().y() / (self.height())]
+        self.update()
 
     def mouseReleaseEvent(self, cursor_event):
         if self.draw_mode == 0:
@@ -132,6 +152,8 @@ class ImageScroller(QtWidgets.QWidget):
     def setImage(self, pict_path):
         self.pict = cv2.imdecode(np.fromfile(pict_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)  # cv2.imread(pict_path)
         self.chosen_points = []
+        self.corners = []
+        self.pict_path = pict_path
         self.path = QtGui.QPainterPath()
         self.update()
 
@@ -147,6 +169,17 @@ class ImageScroller(QtWidgets.QWidget):
             self.saveImage()
         if event.key() == Qt.Qt.Key_Backspace and len(self.chosen_points) > 0:
             del self.chosen_points[-1]
+            self.update()
+        if event.key() == Qt.Qt.Key_C and len(self.corners) > 0:
+            self.pict = self.pict[int(self.corners[0][1] * self.pict.shape[0]):int(self.corners[1][1] * self.pict.shape[0]),
+                                  int(self.corners[0][0] * self.pict.shape[1]):int(self.corners[1][0] * self.pict.shape[1])]
+            self.corners = []
+            self.update()
+            extention = "." + os.path.splitext(self.pict_path)[1][1:]
+            success, im_buf_arr = cv2.imencode(extention, self.pict)
+            if success:
+                im_buf_arr.tofile(self.pict_path)
+            self.corners = []
             self.update()
 
 

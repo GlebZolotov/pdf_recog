@@ -57,6 +57,9 @@ class PageWindow(QtWidgets.QWidget):
         self.pushButton_7 = QtWidgets.QPushButton(self.actions)
         self.pushButton_7.setObjectName("pushButton_7")
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.pushButton_7)
+        self.pushButton_8 = QtWidgets.QPushButton(self.actions)
+        self.pushButton_8.setObjectName("pushButton_8")
+        self.formLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.pushButton_8)
 
         self.centralwidget.setFocusProxy(self.active)
         self.setWindowTitle("Page Window")
@@ -67,6 +70,7 @@ class PageWindow(QtWidgets.QWidget):
         self.pushButton_5.setText("Вернуться")
         self.pushButton_6.setText("Следующая")
         self.pushButton_7.setText("Все страницы далее")
+        self.pushButton_8.setText("Обрезать")
 
         self.pushButton.clicked.connect(self.detectTableSlot)
         self.pushButton_4.clicked.connect(self.recogTableSlot)
@@ -75,6 +79,7 @@ class PageWindow(QtWidgets.QWidget):
         self.pushButton_5.clicked.connect(self.goToMain)
         self.pushButton_6.clicked.connect(self.goToNext)
         self.pushButton_7.clicked.connect(self.recogNextToEnd)
+        self.pushButton_8.clicked.connect(self.cutImg)
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def saveSlot(self):
@@ -122,6 +127,9 @@ class PageWindow(QtWidgets.QWidget):
             QtWidgets.qApp.processEvents()
             self.model.lines_for_recog(self.active.chosen_points)
             self.model.recog_table(self.pict_path, self.params.params)
+
+    def cutImg(self):
+        self.active.draw_mode = 2
 
 
 if __name__ == "__main__":
