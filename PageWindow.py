@@ -87,6 +87,7 @@ class PageWindow(QtWidgets.QWidget):
 
     def setImage(self, pict_path):
         self.pict_path = pict_path
+        self.model.setFileName(pict_path)
         self.active.setImage(pict_path)
 
     def detectTableSlot(self):
@@ -101,6 +102,7 @@ class PageWindow(QtWidgets.QWidget):
         self.active.draw_mode = 1
 
     def drawLinesSlot(self):
+        self.active.corners = []
         self.active.draw_mode = 0
 
     def goToMain(self):
@@ -129,6 +131,7 @@ class PageWindow(QtWidgets.QWidget):
             self.model.recog_table(self.pict_path, self.params.params)
 
     def cutImg(self):
+        self.active.chosen_points = []
         self.active.draw_mode = 2
 
 

@@ -18,7 +18,8 @@ class ImageScroller(QtWidgets.QWidget):
         self.render_coeff = 1.0
         self.pict_path = pict_path
         if pict_path is not None:
-            self.pict = cv2.imdecode(np.fromfile(pict_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)  # cv2.imread(pict_path)
+            self.pict = cv2.imdecode(np.fromfile(pict_path, dtype=np.uint8),
+                                     cv2.IMREAD_UNCHANGED)  # cv2.imread(pict_path)
             self.path = QtGui.QPainterPath()
 
     def calc_size(self, parent_widget_size, img_size):
@@ -29,6 +30,7 @@ class ImageScroller(QtWidgets.QWidget):
             self.render_coeff = coeffs[1]
 
     def paintEvent(self, paint_event):
+        self.setGeometry(QtCore.QRect(0, 0, 630, 900))
         self.calc_size([self.size().width(), self.size().height()], [self.pict.shape[1], self.pict.shape[0]])
         pict_render = cv2.resize(self.pict, (round(self.pict.shape[1] * self.render_coeff),
                                              round(self.pict.shape[0] * self.render_coeff)))
@@ -123,7 +125,8 @@ class ImageScroller(QtWidgets.QWidget):
             self.chosen_points.insert(index, copy.deepcopy(line))
             del self.chosen_points[-1]
         elif self.draw_mode == 1:
-            if cursor_event.pos().x() > self.width() or cursor_event.pos().y() > self.height():
+            if cursor_event.pos().x() > self.width() or cursor_event.pos().y() > self.height() or len(
+                    self.chosen_points) == 0:
                 return
             p = [cursor_event.pos().x(), cursor_event.pos().y()]
             ind = 0
@@ -171,8 +174,13 @@ class ImageScroller(QtWidgets.QWidget):
             del self.chosen_points[-1]
             self.update()
         if event.key() == Qt.Qt.Key_C and len(self.corners) > 0:
-            self.pict = self.pict[int(self.corners[0][1] * self.pict.shape[0]):int(self.corners[1][1] * self.pict.shape[0]),
-                                  int(self.corners[0][0] * self.pict.shape[1]):int(self.corners[1][0] * self.pict.shape[1])]
+            x1 = min(self.corners[0][0], self.corners[1][0])
+            x2 = max(self.corners[0][0], self.corners[1][0])
+            y1 = min(self.corners[0][1], self.corners[1][1])
+            y2 = max(self.corners[0][1], self.corners[1][1])
+            self.pict = self.pict[
+                        int(y1 * self.pict.shape[0]):int(y2 * self.pict.shape[0]),
+                        int(x1 * self.pict.shape[1]):int(x2 * self.pict.shape[1])]
             self.corners = []
             self.update()
             extention = "." + os.path.splitext(self.pict_path)[1][1:]

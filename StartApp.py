@@ -101,12 +101,11 @@ class MainWindowUIClass(MainWindow):
         if os.path.exists(self.model.foldName + ".csv"):
             os.remove(self.model.foldName + ".csv")
         with open(self.model.foldName + ".csv", "a") as fout:
-            for num in range(self.model.count_of_pages):
-                fname = os.path.join(self.model.foldName, "Source", str(num + 1) + ".csv")
-                print(fname)
-                if not os.path.exists(fname):
-                    continue
-                with open(fname, "r") as f1:
+            for path in sorted([os.path.join(self.model.foldName, "Source", name) for name in
+                                os.listdir(os.path.join(self.model.foldName, "Source")) if
+                                name.endswith(".csv")]):
+                print(path)
+                with open(path, "r") as f1:
                     for line in f1:
                         fout.write(line)
 

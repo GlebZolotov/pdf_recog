@@ -339,6 +339,16 @@ def detect_lines(table_img: np.ndarray, params: Params) -> list:
             ))
     return res
 
+"""
+def coord_in_gor_line(line: list, y: int, width: int):
+    return line[0] + (line[1] - line[0]) * y / (width - 1)
+
+
+def find_vert_lines(cv_img: np.ndarray, up_gor_line: list, down_gor_line: list, dist_between_lines: int):
+    for y in range(cv_img.shape[1]):
+        start_x = coord_in_gor_line(up_gor_line, y, cv_img.shape[1]) + dist_between_lines
+        
+"""
 
 # type_c: 0 - up, 1 - left, 2 - right, 3 - down
 def is_line(cv_img: np.ndarray, i: int, j: int, type_c: int, number_of_points: int, corridor: int) -> bool:

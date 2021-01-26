@@ -27,6 +27,7 @@ class Model:
     def setFileName(self, fileName):
         if self.isValid(fileName):
             self.fileName = fileName
+            self.foldName = os.sep.join(os.path.normpath(fileName).split(os.sep)[:-2])
 
     def setFileNamePDF(self, fileName):
         self.setFileName(fileName)
@@ -57,7 +58,6 @@ class Model:
                 names_img.append(os.path.join(name_source_fold, str(i_) + ".jpg"))
                 img.save(names_img[-1], 'JPEG')
                 i_ = i_ + 1
-            self.count_of_pages = i_ - 1
         self.logger.info("end convert")
         return names_img
 
@@ -76,7 +76,7 @@ class Model:
         cv.line(corns, (corners[3][1], corners[3][0]), (corners[2][1], corners[2][0]), (0, 0, 0), 10)
         cv.imwrite(name_img.replace("Source", "Tables"), corns)
 
-        thresh_ = cv.threshold(cv_img, 220, 255, cv.THRESH_BINARY_INV)[1]
+        thresh_ = cv.threshold(cv_img, params.thr_border, 255, cv.THRESH_BINARY_INV)[1]
         # Поиск линий таблицы
         upper_lines = pdf_recog.clean_points(pdf_recog.fill_lines(thresh_, corners[0], corners[1], 0, params), params.min_dist_between_points)
         left_lines = pdf_recog.clean_points(pdf_recog.fill_lines(thresh_, corners[0], corners[2], 1, params), params.min_dist_between_points)
@@ -189,6 +189,9 @@ class Model:
     def lines_for_recog(self, lines):
         gor_lines = []
         vert_lines = []
+        if len(self.shape) == 0:
+            cv_img = cv.imdecode(np.fromfile(self.fileName, dtype=np.uint8), cv.IMREAD_GRAYSCALE)
+            self.shape = [cv_img.shape[1], cv_img.shape[0]]
         for i in range(len(lines)):
             line = lines[i]
             x1 = line[0][1]
