@@ -35,8 +35,11 @@ class ImageScroller(QtWidgets.QWidget):
         pict_render = cv2.resize(self.pict, (round(self.pict.shape[1] * self.render_coeff),
                                              round(self.pict.shape[0] * self.render_coeff)))
         self.resize(pict_render.shape[1], pict_render.shape[0])
-        h, w, ch = pict_render.shape
-        self._image = QtGui.QImage(pict_render.data, w, h, 3 * w, QtGui.QImage.Format_RGB888)
+        h, w = pict_render.shape[:2]
+        if len(pict_render.shape) == 2:
+            self._image = QtGui.QImage(pict_render.data, w, h, w, QtGui.QImage.Format_Grayscale8)
+        elif len(pict_render.shape) == 3:
+            self._image = QtGui.QImage(pict_render.data, w, h, 3 * w, QtGui.QImage.Format_RGB888)
         painter = QtGui.QPainter(self._image)
         pen = QtGui.QPen()
         pen.setWidth(self.width() // 200)
@@ -94,6 +97,13 @@ class ImageScroller(QtWidgets.QWidget):
                          self.chosen_points[-1][1][1] * self.height()]]) < 10:
                 del self.chosen_points[-1]
                 return
+
+            delta_x = math.fabs((self.chosen_points[-1][0][0] - self.chosen_points[-1][1][0]) * self.width())
+            delta_y = math.fabs((self.chosen_points[-1][0][1] - self.chosen_points[-1][1][1]) * self.height())
+            if (delta_x > delta_y and self.chosen_points[-1][0][0] > self.chosen_points[-1][1][0]) or (
+                    delta_x < delta_y and self.chosen_points[-1][0][1] > self.chosen_points[-1][1][1]):
+                self.chosen_points[-1] = [self.chosen_points[-1][1], self.chosen_points[-1][0]]
+
             ind_first_vert_line = 0
             for i in range(len(self.chosen_points)):
                 line = self.chosen_points[i]

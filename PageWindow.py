@@ -60,6 +60,9 @@ class PageWindow(QtWidgets.QWidget):
         self.pushButton_8 = QtWidgets.QPushButton(self.actions)
         self.pushButton_8.setObjectName("pushButton_8")
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.pushButton_8)
+        self.pushButton_9 = QtWidgets.QPushButton(self.actions)
+        self.pushButton_9.setObjectName("pushButton_9")
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.pushButton_9)
 
         self.centralwidget.setFocusProxy(self.active)
         self.setWindowTitle("Page Window")
@@ -71,6 +74,7 @@ class PageWindow(QtWidgets.QWidget):
         self.pushButton_6.setText("Следующая")
         self.pushButton_7.setText("Все страницы далее")
         self.pushButton_8.setText("Обрезать")
+        self.pushButton_9.setText("Предобработать")
 
         self.pushButton.clicked.connect(self.detectTableSlot)
         self.pushButton_4.clicked.connect(self.recogTableSlot)
@@ -80,6 +84,7 @@ class PageWindow(QtWidgets.QWidget):
         self.pushButton_6.clicked.connect(self.goToNext)
         self.pushButton_7.clicked.connect(self.recogNextToEnd)
         self.pushButton_8.clicked.connect(self.cutImg)
+        self.pushButton_9.clicked.connect(self.handleImg)
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def saveSlot(self):
@@ -124,6 +129,8 @@ class PageWindow(QtWidgets.QWidget):
                 break
             self.setImage(self.pict_path)
             QtWidgets.qApp.processEvents()
+            self.handleImg()
+            QtWidgets.qApp.processEvents()
             self.model.detect_table(self.pict_path, self.params.params)
             self.active.setLines(self.model.lines_for_drawing())
             QtWidgets.qApp.processEvents()
@@ -133,6 +140,12 @@ class PageWindow(QtWidgets.QWidget):
     def cutImg(self):
         self.active.chosen_points = []
         self.active.draw_mode = 2
+
+    def handleImg(self):
+        self.active.chosen_points = []
+        self.active.corners = []
+        self.model.handle_img(self.pict_path, self.params.params)
+        self.active.setImage(self.pict_path)
 
 
 if __name__ == "__main__":

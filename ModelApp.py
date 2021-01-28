@@ -12,6 +12,42 @@ import copy
 import math
 
 
+def check_copy(name_img):
+    if not os.path.exists(name_img[:-4] + "_s.jpg"):
+        shutil.copyfile(name_img, name_img[:-4] + "_s.jpg")
+    return name_img[:-4] + "_s.jpg"
+
+
+def save_cv_img(img, name):
+    ext = "." + os.path.splitext(name)[1][1:]
+    success, im_buf_arr = cv.imencode(ext, img)
+    if success:
+        im_buf_arr.tofile(name)
+
+
+def rotation(image, angleInDegrees):
+    h, w = image.shape[:2]
+    img_c = (w / 2, h / 2)
+
+    rot = cv.getRotationMatrix2D(img_c, angleInDegrees, 1)
+
+    rad = math.radians(angleInDegrees)
+    sin = math.sin(rad)
+    cos = math.cos(rad)
+    b_w = int((h * abs(sin)) + (w * abs(cos)))
+    b_h = int((h * abs(cos)) + (w * abs(sin)))
+
+    rot[0, 2] += ((b_w / 2) - img_c[0])
+    rot[1, 2] += ((b_h / 2) - img_c[1])
+
+    outImg = cv.warpAffine(image, rot, (b_w, b_h), flags=cv.INTER_LINEAR, borderValue=(255, 255, 255))
+    return outImg
+
+
+def open_cv_img(name):
+    return cv.imdecode(np.fromfile(name, dtype=np.uint8), cv.IMREAD_GRAYSCALE)
+
+
 class Model:
     def __init__(self):
         self.fileName = None
@@ -207,3 +243,12 @@ class Model:
                 vert_lines.append([[round(x1 * self.shape[1]), round(y1 * self.shape[0])],
                                    [round(x2 * self.shape[1]), round(y2 * self.shape[0])]])
         self.lines = [gor_lines, vert_lines]
+
+    def handle_img(self, name_img, params):
+        cv_img = open_cv_img(check_copy(name_img))
+        cv_img = rotation(cv_img, params.angle)
+        if params.cut_width > 0:
+            cv_img = cv_img[params.cut_width:-params.cut_width, params.cut_width:-params.cut_width]
+        save_cv_img(cv_img, name_img)
+
+

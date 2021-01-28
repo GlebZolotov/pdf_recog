@@ -394,12 +394,12 @@ def fill_lines(cv_img: np.ndarray, p1: list, p2: list, type_c: int, params: Para
         delta = (p2[1] - p1[1]) / (p2[0] - p1[0])
 
     if type_c == 0:
-        for j in range(p1[1] + 10, p2[1] - 10):
+        for j in range(p1[1] + params.min_dist_between_points, p2[1] - params.min_dist_between_points):
             i = math.floor(delta * (j - p1[1])) + p1[0]
             if is_line(cv_img, i, j, type_c, params.count_of_points, params.coridor):
                 res.append([i, j])
     elif type_c == 1:
-        for i in range(p1[0] + 10, p2[0] - 10):
+        for i in range(p1[0] + params.min_dist_between_points, p2[0] - params.min_dist_between_points):
             j = math.floor(delta * (i - p1[0])) + p1[1]
             if is_line(cv_img, i, j, type_c, params.count_of_points, params.coridor):
                 res.append([i, j])
@@ -407,8 +407,8 @@ def fill_lines(cv_img: np.ndarray, p1: list, p2: list, type_c: int, params: Para
                     i += 3 * (res[-1][0] - res[-2][0]) // 4
     elif type_c == 2:
         for found_p in more_inf[1]:
-            for i in range(found_p[0] + more_inf[0] - params.min_dist_between_points // 2,
-                           found_p[0] + more_inf[0] + params.min_dist_between_points // 2):
+            for i in range(found_p[0] + more_inf[0] - params.min_dist_between_points,
+                           found_p[0] + more_inf[0] + params.min_dist_between_points):
                 j = math.floor(delta * (i - p1[0])) + p1[1]
                 if i < cv_img.shape[0] and j < cv_img.shape[1] and is_line(cv_img, i, j, type_c, params.count_of_points, params.coridor):
                     res.append([i, j])
@@ -420,8 +420,8 @@ def fill_lines(cv_img: np.ndarray, p1: list, p2: list, type_c: int, params: Para
                 res.append([found_p[0] + more_inf[0], math.floor(delta * (found_p[0] + more_inf[0] - p1[0])) + p1[1]])
     elif type_c == 3:
         for found_p in more_inf[1]:
-            for j in range(found_p[1] + more_inf[0] - params.min_dist_between_points // 2,
-                           found_p[1] + more_inf[0] + params.min_dist_between_points // 2):
+            for j in range(found_p[1] + more_inf[0] - params.min_dist_between_points,
+                           found_p[1] + more_inf[0] + params.min_dist_between_points):
                 i = math.floor(delta * (j - p1[1])) + p1[0]
                 if is_line(cv_img, i, j, type_c, params.count_of_points, params.coridor):
                     res.append([i, j])
@@ -584,7 +584,7 @@ def recog_text(img: np.ndarray, p1: list, p2: list, p3: list, p4: list, i: int =
     # cv.imwrite("imgs\\tess\\inv_n_" + str(page_counter) + "_" + str(i) + ".jpg", img_with_text)
 
     opt_image = optimize_img(img_with_text)
-    cv.imwrite(str(i) + str(j) + ".jpg", opt_image)
+    cv.imwrite("imgs\\tess" + str(i) + "_" + str(j) + ".jpg", opt_image)
     text = pytesseract.image_to_string(opt_image, lang='rus').replace('\n', ' ').replace('\t', ' ')
     if text.strip() == "":
         text = pytesseract.image_to_string(opt_image, config='digits').replace('\n', ' ').replace('\t', ' ')

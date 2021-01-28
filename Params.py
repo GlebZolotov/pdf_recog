@@ -7,5 +7,7 @@ class Params:
         self.min_dist_between_points = 15
         self.coridor = 2
         self.count_of_points = 20
+        self.cut_width = 0
+        self.angle = 0
         self.kill_border = False
         self.thr_text = 160
