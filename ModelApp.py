@@ -110,7 +110,7 @@ class Model:
         cv.line(corns, (corners[0][1], corners[0][0]), (corners[2][1], corners[2][0]), (0, 0, 0), 10)
         cv.line(corns, (corners[3][1], corners[3][0]), (corners[1][1], corners[1][0]), (0, 0, 0), 10)
         cv.line(corns, (corners[3][1], corners[3][0]), (corners[2][1], corners[2][0]), (0, 0, 0), 10)
-        cv.imwrite(name_img.replace("Source", "Tables"), corns)
+        # cv.imwrite(name_img.replace("Source", "Tables"), corns)
 
         thresh_ = cv.threshold(cv_img, params.thr_border, 255, cv.THRESH_BINARY_INV)[1]
         # Поиск линий таблицы
@@ -191,7 +191,10 @@ class Model:
     def detect_table(self, name_img, params):
         self.logger.info("Start " + name_img)
         try:
-            self.lines = self.get_lines_of_table(name_img, params)
+            if not params.emulate_border:
+                self.lines = self.get_lines_of_table(name_img, params)
+            else:
+                self.lines = self.emulate_lines_of_table(name_img, params)
             self.logger.info("Detect table " + name_img)
         except Exception:
             self.logger.error("Error in detect table")
@@ -246,9 +249,79 @@ class Model:
 
     def handle_img(self, name_img, params):
         cv_img = open_cv_img(check_copy(name_img))
-        cv_img = rotation(cv_img, params.angle)
+        cv_img = rotation(cv_img, params.angle / 5)
         if params.cut_width > 0:
             cv_img = cv_img[params.cut_width:-params.cut_width, params.cut_width:-params.cut_width]
         save_cv_img(cv_img, name_img)
+
+    # type_line: 0 - gorizontal, 1 - vertical
+    def check_empty_line(self, cv_thr, coord, start_c, stop_c, type_line):
+        if type_line == 0:
+            for y in range(start_c, stop_c):
+                if cv_thr[coord, y] == 0:
+                    return False
+        elif type_line == 1:
+            for x in range(start_c, stop_c):
+                if cv_thr[x, coord] == 0:
+                    return False
+        return True
+
+    def emulate_lines_of_table(self, name_img, params):
+        cv_img = open_cv_img(name_img)
+        self.shape = [cv_img.shape[1], cv_img.shape[0]]
+        cv_thr = cv.threshold(cv_img, params.thr_border, 255, cv.THRESH_BINARY)[1]
+        cv.imwrite("imgs\\thr0.jpg", cv_thr)
+
+        h, w = cv_thr.shape[:2]
+        i_start = 5
+        while self.check_empty_line(cv_thr, i_start, 0, w, 0):
+            i_start = i_start + 5
+        i_start = i_start - 5
+        i_stop = h - 1 - 5
+        while self.check_empty_line(cv_thr, i_stop, 0, w, 0):
+            i_stop = i_stop - 5
+        i_stop = i_stop + 5
+        j_start = 5
+        while self.check_empty_line(cv_thr, j_start, 0, h, 1):
+            j_start = j_start + 5
+        j_start = j_start - 5
+        j_stop = w - 1 - 5
+        while self.check_empty_line(cv_thr, j_stop, 0, h, 1):
+            j_stop = j_stop - 5
+        j_stop = j_stop + 5
+
+        gor_lines = [[[i_start, j_start], [i_start, j_stop]]]
+        vert_lines = [[[i_start, j_start], [i_stop, j_start]]]
+
+        i = i_start + 5
+        while i < i_stop - 5:
+            while i < i_stop - 5 and not self.check_empty_line(cv_thr, i, j_start, j_stop, 0):
+                i = i + 5
+            if i >= i_stop - 5:
+                break
+            i1 = i
+            while i < i_stop - 5 and self.check_empty_line(cv_thr, i, j_start, j_stop, 0):
+                i = i + 1
+            if i >= i_stop - 5:
+                break
+            gor_lines.append([[(i1 + i - 1) // 2, j_start], [(i1 + i - 1) // 2, j_stop]])
+
+        j = j_start + 5
+        while j < j_stop - 5:
+            while j < j_stop - 5 and not self.check_empty_line(cv_thr, j, i_start, i_stop, 1):
+                j = j + 5
+            if j >= j_stop - 5:
+                break
+            j1 = j
+            while j < j_stop - 5 and self.check_empty_line(cv_thr, j, i_start, i_stop, 1):
+                j = j + 1
+            if j >= j_stop - 5:
+                break
+            vert_lines.append([[i_start, (j1 + j - 1) // 2], [i_stop, (j1 + j - 1) // 2]])
+
+        gor_lines.append([[i_stop, j_start], [i_stop, j_stop]])
+        vert_lines.append([[i_start, j_stop], [i_stop, j_stop]])
+        return [gor_lines, vert_lines]
+
 
 
