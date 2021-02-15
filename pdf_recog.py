@@ -818,3 +818,14 @@ if __name__ == "__main__":
                 f.write('\n')
 
             print('End of page')
+
+
+def recog_text_full(img: np.ndarray) -> str:
+    cf = configparser.ConfigParser()
+    cf.read("settings.ini")
+    pytesseract.pytesseract.tesseract_cmd = cf.get("paths", "tesseract_path")
+    # img_with_text = cv.threshold(img, 200, 255, cv.THRESH_BINARY)[1]
+    # opt_image = optimize_img(img_with_text)
+    text = pytesseract.image_to_string(img, config='digits').replace('\n', ' ').replace('\t', ' ')
+
+    return text.replace(".", "").replace(",", "").replace(";", "").strip()

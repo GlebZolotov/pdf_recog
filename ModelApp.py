@@ -89,10 +89,12 @@ class Model:
         with TemporaryDirectory() as tmpdir:
             i_ = 1
             names_img = []
+            # with open(self.fileName.replace(".pdf", ".csv"), 'w') as f: #
             for img in convert_from_path(self.fileName, output_folder=tmpdir,
                                          poppler_path=cf.get("paths", "poppler_path")):
                 names_img.append(os.path.join(name_source_fold, str(i_) + ".jpg"))
                 img.save(names_img[-1], 'JPEG')
+                # f.write(str(i_) + ";" + pdf_recog.recog_text_full(open_cv_img(names_img[-1])) + '\n')  # jhg
                 i_ = i_ + 1
         self.logger.info("end convert")
         return names_img
